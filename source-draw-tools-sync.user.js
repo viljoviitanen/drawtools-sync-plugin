@@ -14,7 +14,7 @@
 // @grant          none
 // ==/UserScript==
 
-// Released under the "ISC" License: https://github.com/viljoviitanen/drawtools-sync-plugin/LICENSE
+// Released under the "ISC" License: https://github.com/viljoviitanen/drawtools-sync-plugin/blob/master/LICENSE
 
 function wrapper(plugin_info) {
 // ensure plugin framework is there, even if iitc is not yet loaded
