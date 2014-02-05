@@ -3,6 +3,10 @@ drawtools-sync-plugin
 
 An IITC plugin to sync drawtools plugin drawings to a server
 
+Installable plugin is available at
+
+https://viljoviitanen.nfshost.com/iitc/draw-tools-sync.user.js
+
 The server source is available at 
 
 https://github.com/viljoviitanen/drawtools-sync
