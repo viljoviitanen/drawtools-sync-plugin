@@ -4,7 +4,6 @@
 // @category       Layer
 // @version        XXVERSIONXX
 // @namespace      https://github.com/viljoviitanen/drawtools-sync-plugin
-// @updateURL      XXURLXX
 // @downloadURL    XXURLXX
 // @description    Allows syncing draw tools drawings to a server. Server source is available at https://github.com/viljoviitanen/drawtools-sync
 // @include        https://www.ingress.com/intel*
