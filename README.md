@@ -14,8 +14,9 @@ Quick instructions:
 - open "DrawTools Sync" from right hand side blue box
 - before trying anything else "Login at Sync Server".
 - the sharing syntax is lousy (a raw json/python array of email addresses). Sorry about that :)
+- but for easier sharing, use the "sharing key" functionality. When a sharing key is used, the email address that used the key is added to the "shared" list automatically.
 
-The UI and the code need a lot of polishing.
+The UI and the code could still use some polishing.
 
 For now the server is hardcoded in the plugin, but you could easily run your own (provided you have some experience with google appengine) and change it from the plugin code.
 I would advise you not to store anything sensitive at the server unless you trust the owner of the server, as he/she can see all the data in the server, it's stored plaintext.
