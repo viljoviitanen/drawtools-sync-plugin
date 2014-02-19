@@ -34,16 +34,11 @@ window.SYNCSERVER="XXSERVERXX"
 
 window.plugin.drawToolsSync.syncOpt = function() {
       dialog({
-        html: '<button onclick="window.open(\''+SYNCSERVER+'/login\')">Login at Sync Server</button><button onclick="window.plugin.drawToolsSync.SyncCreate()">Create New Drawing</button><button onclick="window.plugin.drawToolsSync.SyncList()">Get List of Drawings</button><div id=drawtoolssync_list></div><div id=drawtoolssync_item></div>',
+        html: '<button onclick="window.open(\''+SYNCSERVER+'/login\')">Login at Sync Server</button><button onclick="window.plugin.drawToolsSync.SyncInit()">Save Drawing</button><button onclick="window.plugin.drawToolsSync.SyncList()">Get List of Drawings</button><button onclick="window.plugin.drawToolsSync.SyncLoadWithKey()">Get with Share Key</button><div id=drawtoolssync_list></div><div id=drawtoolssync_item></div>',
         width: 600,
         dialogClass: 'ui-dialog-drawtoolsSet-copy',
         title: 'Draw Tools Sync'
         });
-}
-
-window.plugin.drawToolsSync.SyncCreate = function() {
-  localStorage['plugin-draw-tools-synckey']='new'
-  $('#drawtoolssync_item').html('Name: <input id=drawtoolssync_name value="New Drawing"><br>Shared with: <input id=drawtoolssync_shared value="[]"><br><button onclick="window.plugin.drawToolsSync.SyncSave()">Save</button> <p> Note: shared emails format is a json array: <tt>["email.address@example.com","another.address@example.com"]</tt>')
 }
 
 window.plugin.drawToolsSync.SyncDel = function () {
@@ -112,11 +107,6 @@ window.plugin.drawToolsSync.SyncSave = function() {
 }
 
 window.plugin.drawToolsSync.SyncLoad = function(key) {
-  if (!confirm("Merge loaded drawing (ok) or overwrite (cancel)?")) {
-    delete localStorage['plugin-draw-tools-layer'];
-    window.plugin.drawTools.drawnItems.clearLayers();
-    window.plugin.drawTools.load();
-  }
   $.ajax({
     dataType: "jsonp",
     url: SYNCSERVER+'/load',
@@ -132,12 +122,54 @@ window.plugin.drawToolsSync.SyncLoad = function(key) {
          alert("Could not load data.")
          return
       }
+      if (!confirm("Merge loaded drawing (ok) or overwrite (cancel)?")) {
+          delete localStorage['plugin-draw-tools-layer'];
+          window.plugin.drawTools.drawnItems.clearLayers();
+          window.plugin.drawTools.load();
+      }
       if (!data.name) data.name="(unnamed)"
     
-      $('#drawtoolssync_item').html('Name: <input id=drawtoolssync_name value="'+window.plugin.drawToolsSync.escapehtml(data.name)+'"><br>Shared with: <input id=drawtoolssync_shared><br><button onclick="window.plugin.drawToolsSync.SyncSave()">Save</button><button onclick="window.plugin.drawToolsSync.SyncDel()">Delete</button> <p> Note: shared emails format is a json array: <tt>["email.address@example.com","another.address@example.com"]</tt>')
+      $('#drawtoolssync_item').html(window.plugin.drawToolsSync.escapehtml(data.name)+' loaded succesfully<br>Shared with: <input id=drawtoolssync_shared><br>')
       $('#drawtoolssync_shared').val(JSON.stringify(data.shared))
-      localStorage['plugin-draw-tools-syncshared']=data.shared
+      localStorage['plugin-draw-tools-syncshared']=JSON.stringify(data.shared)
       localStorage['plugin-draw-tools-syncname']=data.name
+      localStorage['plugin-draw-tools-syncsharekey']=data.sharekey
+      localStorage['plugin-draw-tools-synckey']=key
+      window.plugin.drawTools.import(data.content)
+    }
+  })
+}
+
+window.plugin.drawToolsSync.SyncLoadWithKey = function() {
+  var sharekey = prompt('Enter Share Key.', '');
+  if (sharekey == null || sharekey=='') return
+  $.ajax({
+    dataType: "jsonp",
+    url: SYNCSERVER+'/loadwithkey',
+    data: {'sharekey':sharekey },
+    xhrFields: { withCredentials: true },
+    crossDomain: true,
+    success: function(data) {
+      if(data.error) {
+         alert("Could not load data: "+data.error)
+         return
+      }
+      if(!data.content) {
+         alert("Could not load data.")
+         return
+      }
+      if (!confirm("Merge loaded drawing (ok) or overwrite (cancel)?")) {
+        delete localStorage['plugin-draw-tools-layer'];
+        window.plugin.drawTools.drawnItems.clearLayers();
+        window.plugin.drawTools.load();
+      }
+      if (!data.name) data.name="(unnamed)"
+  
+      $('#drawtoolssync_item').html(window.plugin.drawToolsSync.escapehtml(data.name)+' loaded succesfully<br>Shared with: <input id=drawtoolssync_shared><br>')
+      $('#drawtoolssync_shared').val(JSON.stringify(data.shared))
+      localStorage['plugin-draw-tools-syncshared']=JSON.stringify(data.shared)
+      localStorage['plugin-draw-tools-syncname']=data.name
+      localStorage['plugin-draw-tools-syncsharekey']=data.sharekey
       localStorage['plugin-draw-tools-synckey']=key
       window.plugin.drawTools.import(data.content)
     }
@@ -162,31 +194,51 @@ window.plugin.drawToolsSync.SyncList = function() {
     own=data.own
     shared=data.shared
     s="My drawings:<br>"
+    if (own.length == 0) {
+      s+='(none)'
+    }
     for (i = 0; i < own.length; i++) {
       name=own[i].name
       if (!name) name="(unnamed)"
       s+='<a href="javascript:window.plugin.drawToolsSync.SyncLoad('+own[i].key+')">' + name + '</a><br>'
     }
     s+="Shared drawings:<br>"
+    if (shared.length == 0) {
+      s+='(none)'
+    }
     for (i = 0; i < shared.length; i++) {
       name=shared[i].name
       if (!name) name="(unnamed)"
       s+='<a href="javascript:window.plugin.drawToolsSync.SyncLoad('+shared[i].key+')">' + name + '</a><br>'
     }
     $('#drawtoolssync_list').html(s)
-    if(!localStorage['plugin-draw-tools-syncname']) return
-    $('#drawtoolssync_item').html('Name: <input id=drawtoolssync_name value="'+window.plugin.drawToolsSync.escapehtml(localStorage['plugin-draw-tools-syncname'])+'"><br>Shared with: <input id=drawtoolssync_shared><br><button onclick="window.plugin.drawToolsSync.SyncSave()">Save</button><button onclick="window.plugin.drawToolsSync.SyncDel()">Delete</button> <p> Note: shared emails format is a json array: <tt>["email.address@example.com","another.address@example.com"]</tt>')
-    $('#drawtoolssync_shared').val(JSON.stringify(data.shared))
+    $('#drawtoolssync_item').html('')
     } 
   })
 }
 
 window.plugin.drawToolsSync.SyncInit = function() {
     shared=localStorage['plugin-draw-tools-syncshared']
+    sharekey=localStorage['plugin-draw-tools-syncsharekey']
     name=localStorage['plugin-draw-tools-syncname']
     key=localStorage['plugin-draw-tools-synckey']
-    $('#drawtoolssync_item').html('Name: <input id=drawtoolssync_name value="'+window.plugin.drawToolsSync.escapehtml(data.name)+'"><br>Shared with: <input id=drawtoolssync_shared><br><button onclick="window.plugin.drawToolsSync.SyncSave()">Save</button><button onclick="window.plugin.drawToolsSync.SyncDel()">Delete</button> <p> Note: shared emails format is a json array: <tt>["email.address@example.com","another.address@example.com"]</tt>')
-    $('#drawtoolssync_shared').val(JSON.stringify(shared))
+    html=''
+    if (key==undefined) {
+      key='new'
+      localStorage['plugin-draw-tools-synckey']=key
+      shared='[]'
+      sharekey=''
+      date=new Date()
+      name='Unnamed drawing at '+date.toLocaleString()
+      localStorage['plugin-draw-tools-syncname']=name
+    }
+    else {
+      html+='<button onclick="delete localStorage[\'plugin-draw-tools-synckey\']; window.plugin.drawToolsSync.SyncInit()">Create New Drawing</button><br>'
+    }
+    html+='Name: <input size=50 id=drawtoolssync_name value="'+window.plugin.drawToolsSync.escapehtml(name)+'"><br>Shared with: <input id=drawtoolssync_shared><br>Share Key: <input id=drawtoolssync_sharekey size=32 readonly><br><br><button onclick="window.plugin.drawToolsSync.SyncSave()">Save</button><button onclick="window.plugin.drawToolsSync.SyncDel()">Delete</button> <p> Note: shared emails format is a json array: <tt>["email.address@example.com","another.address@example.com"]</tt>'
+    $('#drawtoolssync_item').html(html)
+    $('#drawtoolssync_shared').val(shared)
+    $('#drawtoolssync_sharekey').val(sharekey)
 }
 
 window.plugin.drawToolsSync.escapehtml = function(s) {
