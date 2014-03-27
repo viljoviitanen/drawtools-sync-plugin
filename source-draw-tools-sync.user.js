@@ -76,11 +76,15 @@ window.plugin.drawToolsSync.SyncSave = function() {
   //base64-encoded zlib-deflated data.
   c=btoa(zpipe.deflate(JSON.stringify({'key':key,'name':name,'content':content,'shared':shared})))
   //jsonp calls are GET calls and the url must not be greater than about 2k bytes.
-  //1888 = max length for c parameter from empirical tests.
+  //1860 = max length for c parameter from empirical tests.
   //68 = compressed size of a new empty drawing, empty name and no sharing key
-  if(c.length > 1888) {
-    alert("Too much data in the drawing! drawing size: "+Math.ceil(100*(c.length-68)/1820)+"%")
-    return
+  //note: with jsonp there is no error message if there is a server error
+  //like appengine "414 url too long"
+  if(c.length > 1860) {
+    alert("-----------------------------------------------------------\n"+
+          "Too much data in the drawing, saving will probably fail! Approximate drawing size: "+
+          Math.floor(100*(c.length-68)/1792)+"%\n"+
+          "-----------------------------------------------------------")
   }
   $.ajax({
     dataType: "jsonp",
@@ -105,7 +109,7 @@ window.plugin.drawToolsSync.SyncSave = function() {
     // XXX in distant future, check that server returned the same content
     // we put in. if not, someone else modified it betweem saves.
     // provide some options for resolving the conflict.
-    alert("save successful. drawing size: "+Math.floor(100*(c.length-68)/1820)+"%")
+    alert("Save successful. Approximate drawing size: "+Math.floor(100*(c.length-68)/1792)+"%")
 
     // save the key received from the server, in case this was a new drawing
     localStorage['plugin-draw-tools-synckey'] = data.key
