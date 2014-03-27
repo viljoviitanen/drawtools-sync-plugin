@@ -26,8 +26,6 @@ if(typeof window.plugin !== 'function') window.plugin = function() {};
 // use own namespace for plugin
 window.plugin.drawToolsSync = function() {};
 
-
-
 //XXX TODO make server configurable
 window.SYNCSERVER="XXSERVERXX"
 
@@ -75,10 +73,19 @@ window.plugin.drawToolsSync.SyncSave = function() {
   window.plugin.drawTools.save();
   content=localStorage['plugin-draw-tools-layer']
   shared=$('#drawtoolssync_shared').val()
+  //base64-encoded zlib-deflated data.
+  c=btoa(zpipe.deflate(JSON.stringify({'key':key,'name':name,'content':content,'shared':shared})))
+  //jsonp calls are GET calls and the url must not be greater than about 2k bytes.
+  //1888 = max length for c parameter from empirical tests.
+  //68 = compressed size of a new empty drawing, empty name and no sharing key
+  if(c.length > 1888) {
+    alert("Too much data in the drawing! drawing size: "+Math.ceil(100*(c.length-68)/1820)+"%")
+    return
+  }
   $.ajax({
     dataType: "jsonp",
     url: SYNCSERVER+'/sync',
-    data: {'key':key,'name':name,'content':content,'shared':shared},
+    data: {'c':c},
     xhrFields: { withCredentials: true },
     crossDomain: true,
     success: function(data) {
@@ -98,7 +105,8 @@ window.plugin.drawToolsSync.SyncSave = function() {
     // XXX in distant future, check that server returned the same content
     // we put in. if not, someone else modified it betweem saves.
     // provide some options for resolving the conflict.
-    alert("save successful")
+    alert("save successful. drawing size: "+Math.floor(100*(c.length-68)/1820)+"%")
+
     // save the key received from the server, in case this was a new drawing
     localStorage['plugin-draw-tools-synckey'] = data.key
     }
@@ -261,6 +269,9 @@ window.plugin.drawToolsSync.boot = function() {
 
 
 var setup = window.plugin.drawToolsSync.boot
+
+// begin zpipe. This part is licenced differently than the rest of the file.
+// end zpipe
 
 // PLUGIN END //////////////////////////////////////////////////////////
 
