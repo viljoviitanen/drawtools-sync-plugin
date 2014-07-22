@@ -1,5 +1,12 @@
+Development has been stopped
+
+Plugin development has been stopped in 7/2014, sync server has been removed and installable plugin removed.
+
+Old readme is below.
+
+---
+
 drawtools-sync-plugin
-=====================
 
 An IITC plugin to sync drawtools plugin drawings to a server
 
